@@ -3,74 +3,61 @@ import { Database } from '../types/database.types';
 
 type RestaurantRow = Database['public']['Tables']['restaurants']['Row'];
 
-export class RestaurantRepository {
-  /**
-   * Get all restaurants
-   */
-  async findAll(): Promise<RestaurantRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('restaurants')
-      .select('*')
-      .order('rating', { ascending: false });
+export const findAll = async (): Promise<RestaurantRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('restaurants')
+    .select('*')
+    .order('rating', { ascending: false });
 
-    if (error) {
-      throw new Error(`Failed to fetch restaurants: ${error.message}`);
-    }
-
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to fetch restaurants: ${error.message}`);
   }
 
-  /**
-   * Get restaurant by ID
-   */
-  async findById(id: string): Promise<RestaurantRow | null> {
-    const { data, error } = await supabaseAdmin
-      .from('restaurants')
-      .select('*')
-      .eq('id', id)
-      .single();
+  return data || [];
+};
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null; // Not found
-      }
-      throw new Error(`Failed to fetch restaurant: ${error.message}`);
+export const findById = async (id: string): Promise<RestaurantRow | null> => {
+  const { data, error } = await supabaseAdmin
+    .from('restaurants')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    // not found case
+    if (error.code === 'PGRST116') {
+      return null;
     }
-
-    return data;
+    throw new Error(`Failed to fetch restaurant: ${error.message}`);
   }
 
-  /**
-   * Search restaurants by name or cuisine
-   */
-  async search(query: string): Promise<RestaurantRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('restaurants')
-      .select('*')
-      .or(`name.ilike.%${query}%,cuisine_types.cs.{${query}}`)
-      .order('rating', { ascending: false });
+  return data;
+};
 
-    if (error) {
-      throw new Error(`Failed to search restaurants: ${error.message}`);
-    }
+export const search = async (query: string): Promise<RestaurantRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('restaurants')
+    .select('*')
+    .or(`name.ilike.%${query}%,cuisine_types.cs.{${query}}`)
+    .order('rating', { ascending: false });
 
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to search restaurants: ${error.message}`);
   }
 
-  /**
-   * Get open restaurants
-   */
-  async findOpen(): Promise<RestaurantRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('restaurants')
-      .select('*')
-      .eq('is_open', true)
-      .order('rating', { ascending: false });
+  return data || [];
+};
 
-    if (error) {
-      throw new Error(`Failed to fetch open restaurants: ${error.message}`);
-    }
+export const findOpen = async (): Promise<RestaurantRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('restaurants')
+    .select('*')
+    .eq('is_open', true)
+    .order('rating', { ascending: false });
 
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to fetch open restaurants: ${error.message}`);
   }
-}
+
+  return data || [];
+};

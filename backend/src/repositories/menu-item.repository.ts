@@ -3,93 +3,76 @@ import { Database } from '../types/database.types';
 
 type MenuItemRow = Database['public']['Tables']['menu_items']['Row'];
 
-export class MenuItemRepository {
-  /**
-   * Get all menu items for a restaurant
-   */
-  async findByRestaurantId(restaurantId: string): Promise<MenuItemRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('menu_items')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .order('category', { ascending: true });
+export const findByRestaurantId = async (restaurantId: string): Promise<MenuItemRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('menu_items')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .order('category', { ascending: true });
 
-    if (error) {
-      throw new Error(`Failed to fetch menu items: ${error.message}`);
-    }
-
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to fetch menu items: ${error.message}`);
   }
 
-  /**
-   * Get menu item by ID
-   */
-  async findById(id: string): Promise<MenuItemRow | null> {
-    const { data, error } = await supabaseAdmin
-      .from('menu_items')
-      .select('*')
-      .eq('id', id)
-      .single();
+  return data || [];
+};
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null; // Not found
-      }
-      throw new Error(`Failed to fetch menu item: ${error.message}`);
+export const findById = async (id: string): Promise<MenuItemRow | null> => {
+  const { data, error } = await supabaseAdmin
+    .from('menu_items')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null;
     }
-
-    return data;
+    throw new Error(`Failed to fetch menu item: ${error.message}`);
   }
 
-  /**
-   * Get available menu items for a restaurant
-   */
-  async findAvailableByRestaurantId(restaurantId: string): Promise<MenuItemRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('menu_items')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .eq('is_available', true)
-      .order('category', { ascending: true });
+  return data;
+};
 
-    if (error) {
-      throw new Error(`Failed to fetch available menu items: ${error.message}`);
-    }
+export const findAvailableByRestaurantId = async (restaurantId: string): Promise<MenuItemRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('menu_items')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .eq('is_available', true)
+    .order('category', { ascending: true });
 
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to fetch available menu items: ${error.message}`);
   }
 
-  /**
-   * Get menu items by category
-   */
-  async findByCategory(restaurantId: string, category: string): Promise<MenuItemRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('menu_items')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .eq('category', category)
-      .order('name', { ascending: true });
+  return data || [];
+};
 
-    if (error) {
-      throw new Error(`Failed to fetch menu items by category: ${error.message}`);
-    }
+export const findByCategory = async (restaurantId: string, category: string): Promise<MenuItemRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('menu_items')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .eq('category', category)
+    .order('name', { ascending: true });
 
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to fetch menu items by category: ${error.message}`);
   }
 
-  /**
-   * Get multiple menu items by IDs
-   */
-  async findByIds(ids: string[]): Promise<MenuItemRow[]> {
-    const { data, error } = await supabaseAdmin
-      .from('menu_items')
-      .select('*')
-      .in('id', ids);
+  return data || [];
+};
 
-    if (error) {
-      throw new Error(`Failed to fetch menu items: ${error.message}`);
-    }
+export const findByIds = async (ids: string[]): Promise<MenuItemRow[]> => {
+  const { data, error } = await supabaseAdmin
+    .from('menu_items')
+    .select('*')
+    .in('id', ids);
 
-    return data || [];
+  if (error) {
+    throw new Error(`Failed to fetch menu items: ${error.message}`);
   }
-}
+
+  return data || [];
+};
