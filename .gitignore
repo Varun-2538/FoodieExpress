@@ -1,8 +1,19 @@
+# Dependencies
 node_modules/
+
+# Testing
 test-results/
+
+# Environment
 .env
 .env.local
+
+# Build output
 dist/
 build/
+
+# Logs
 *.log
+
+# OS
 .DS_Store
