@@ -2,7 +2,7 @@
 
 A production-ready Express.js + TypeScript backend with Supabase authentication and database.
 
-## 🏗️ Architecture
+##  Architecture
 
 This backend follows **clean architecture principles** with proper separation of concerns:
 
