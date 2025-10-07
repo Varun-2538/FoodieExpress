@@ -1,11 +1,16 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Browse & Order Flow', () => {
   // Test 1: Authentication & Restaurant Browsing
-  test('should authenticate and browse restaurants with search', async ({ page }) => {
-    // Navigate to homepage
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('should authenticate and browse restaurants with search', async ({ authenticatedPage: page }) => {
+    // Navigate to homepage (user is already authenticated via fixture)
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Verify user is logged in by checking for token
+    const isAuthenticated = await page.evaluate(() => {
+      return !!localStorage.getItem('access_token');
+    });
+    expect(isAuthenticated).toBeTruthy();
 
     // Verify hero section loaded
     await expect(page.locator('h1')).toContainText('Delicious food');
@@ -26,10 +31,9 @@ test.describe('Browse & Order Flow', () => {
   });
 
   // Test 2: Restaurant Menu & Add to Cart
-  test('should select restaurant, browse menu and add items to cart', async ({ page }) => {
-    // Navigate to homepage
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('should select restaurant, browse menu and add items to cart', async ({ authenticatedPage: page }) => {
+    // Navigate to homepage (user is already authenticated via fixture)
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     // Search for restaurants
@@ -43,7 +47,6 @@ test.describe('Browse & Order Flow', () => {
 
     // Wait for restaurant page to load
     await page.waitForURL(/\/restaurant\/\d+/);
-    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
     // Verify restaurant details loaded
@@ -65,10 +68,9 @@ test.describe('Browse & Order Flow', () => {
   });
 
   // Test 3: Cart Management & Checkout
-  test('should manage cart quantities and checkout', async ({ page }) => {
-    // Setup: Add items to cart first
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('should manage cart quantities and checkout', async ({ authenticatedPage: page }) => {
+    // Setup: Add items to cart first (user is already authenticated via fixture)
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
     const searchInput = page.locator('input[type="text"]').first();
@@ -78,7 +80,6 @@ test.describe('Browse & Order Flow', () => {
     const firstRestaurant = page.getByRole('button', { name: /View menu for/ }).first();
     await firstRestaurant.click();
     await page.waitForURL(/\/restaurant\/\d+/);
-    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
     const firstAddButton = page.getByRole('button', { name: /Add.*to cart/i }).first();
@@ -95,7 +96,6 @@ test.describe('Browse & Order Flow', () => {
     const cartLink = page.locator('a[href="/cart"]').first();
     await cartLink.click();
     await page.waitForURL('/cart');
-    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
     // Check cart state
@@ -135,11 +135,11 @@ test.describe('Browse & Order Flow', () => {
       const homeLink = page.locator('a[href="/"]').first();
       await homeLink.click();
       await page.waitForURL('/');
-      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
 
       // Return to cart
-      await page.goto('/cart');
-      await page.waitForLoadState('networkidle');
+      await page.goto('/cart', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
 
       // Verify items persisted
       const stillHasItems = !(await emptyCartMessage.isVisible());
