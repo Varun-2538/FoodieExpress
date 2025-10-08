@@ -1,6 +1,6 @@
 import * as restaurantRepo from '../repositories/restaurant.repository';
 import { Restaurant } from '../types';
-import { AppError } from '../middleware/error.middleware';
+import { createAppError } from '../middleware/error.middleware';
 
 const mapToRestaurant = (row: any): Restaurant => {
   return {
@@ -26,7 +26,7 @@ export const getRestaurantById = async (id: string): Promise<Restaurant> => {
   const restaurant = await restaurantRepo.findById(id);
 
   if (!restaurant) {
-    throw new AppError(404, 'Restaurant not found');
+    throw createAppError(404, 'Restaurant not found');
   }
 
   return mapToRestaurant(restaurant);

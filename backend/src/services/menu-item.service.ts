@@ -1,6 +1,6 @@
 import * as menuItemRepo from '../repositories/menu-item.repository';
 import { MenuItem } from '../types';
-import { AppError } from '../middleware/error.middleware';
+import { createAppError } from '../middleware/error.middleware';
 
 const mapToMenuItem = (row: any): MenuItem => {
   return {
@@ -26,7 +26,7 @@ export const getMenuItemById = async (id: string): Promise<MenuItem> => {
   const menuItem = await menuItemRepo.findById(id);
 
   if (!menuItem) {
-    throw new AppError(404, 'Menu item not found');
+    throw createAppError(404, 'Menu item not found');
   }
 
   return mapToMenuItem(menuItem);

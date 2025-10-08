@@ -2,7 +2,7 @@ import * as orderRepo from '../repositories/order.repository';
 import * as menuItemRepo from '../repositories/menu-item.repository';
 import * as restaurantRepo from '../repositories/restaurant.repository';
 import { Order, CreateOrderRequest, OrderStatus } from '../types';
-import { AppError } from '../middleware/error.middleware';
+import { createAppError } from '../middleware/error.middleware';
 
 const mapToOrder = (row: any): Order => {
   return {
@@ -23,11 +23,11 @@ export const createOrder = async (userId: string, orderRequest: CreateOrderReque
   // validate restaurant exists
   const restaurant = await restaurantRepo.findById(orderRequest.restaurantId);
   if (!restaurant) {
-    throw new AppError(404, 'Restaurant not found');
+    throw createAppError(404, 'Restaurant not found');
   }
 
   if (!restaurant.is_open) {
-    throw new AppError(400, 'Restaurant is currently closed');
+    throw createAppError(400, 'Restaurant is currently closed');
   }
 
   // validate menu items
@@ -35,19 +35,19 @@ export const createOrder = async (userId: string, orderRequest: CreateOrderReque
   const menuItems = await menuItemRepo.findByIds(menuItemIds);
 
   if (menuItems.length !== menuItemIds.length) {
-    throw new AppError(400, 'One or more menu items not found');
+    throw createAppError(400, 'One or more menu items not found');
   }
 
   // check if all items belong to the same restaurant
   const invalidItems = menuItems.filter(item => item.restaurant_id !== orderRequest.restaurantId);
   if (invalidItems.length > 0) {
-    throw new AppError(400, 'All items must be from the same restaurant');
+    throw createAppError(400, 'All items must be from the same restaurant');
   }
 
   // validate availability
   const unavailableItems = menuItems.filter(item => !item.is_available);
   if (unavailableItems.length > 0) {
-    throw new AppError(400, 'One or more items are not available');
+    throw createAppError(400, 'One or more items are not available');
   }
 
   // calculate total
@@ -67,7 +67,7 @@ export const createOrder = async (userId: string, orderRequest: CreateOrderReque
 
   // check minimum order requirement
   if (totalAmount < restaurant.minimum_order) {
-    throw new AppError(
+    throw createAppError(
       400,
       `Minimum order amount is ${restaurant.minimum_order}. Current total: ${totalAmount}`
     );
@@ -99,12 +99,12 @@ export const getOrderById = async (orderId: string, userId: string): Promise<any
   const order = await orderRepo.findByIdWithItems(orderId);
 
   if (!order) {
-    throw new AppError(404, 'Order not found');
+    throw createAppError(404, 'Order not found');
   }
 
   // verify ownership
   if ((order as any).user_id !== userId) {
-    throw new AppError(403, 'Access denied');
+    throw createAppError(403, 'Access denied');
   }
 
   return order;
@@ -119,7 +119,7 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus): P
   const order = await orderRepo.findById(orderId);
 
   if (!order) {
-    throw new AppError(404, 'Order not found');
+    throw createAppError(404, 'Order not found');
   }
 
   const updatedOrder = await orderRepo.updateStatus(orderId, status);

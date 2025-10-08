@@ -1,149 +1,93 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { AuthRequest } from '../types';
+import { asyncHandler } from '../utils/asyncHandler';
+import { createAppError } from '../middleware/error.middleware';
 
-export class AuthController {
-  /**
-   * Sign in with Google OAuth
-   * Returns the OAuth URL for frontend to redirect to
-   */
-  async signInWithGoogle(req: Request, res: Response): Promise<void> {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: req.body.redirectUrl || 'http://localhost:3000/auth/callback',
-        },
-      });
+/**
+ * Sign in with Google OAuth
+ * Returns the OAuth URL for frontend to redirect to
+ */
+export const signInWithGoogle = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: req.body.redirectUrl || 'http://localhost:3000/auth/callback',
+    },
+  });
 
-      if (error) {
-        res.status(400).json({
-          success: false,
-          error: error.message,
-        });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: {
-          url: data.url,
-        },
-      });
-    } catch (error) {
-      console.error('Google sign in error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to initiate Google sign in',
-      });
-    }
+  if (error) {
+    throw createAppError(400, error.message);
   }
 
-  /**
-   * Sign out
-   * Invalidates the user's session
-   */
-  async signOut(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        res.status(401).json({
-          success: false,
-          error: 'No authorization token provided',
-        });
-        return;
-      }
+  res.json({
+    success: true,
+    data: {
+      url: data.url,
+    },
+  });
+});
 
-      const token = authHeader.substring(7);
-      const { error } = await supabase.auth.admin.signOut(token);
-
-      if (error) {
-        res.status(400).json({
-          success: false,
-          error: error.message,
-        });
-        return;
-      }
-
-      res.json({
-        success: true,
-        message: 'Signed out successfully',
-      });
-    } catch (error) {
-      console.error('Sign out error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to sign out',
-      });
-    }
+/**
+ * Sign out
+ * Invalidates the user's session
+ */
+export const signOut = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    throw createAppError(401, 'No authorization token provided');
   }
 
-  /**
-   * Get current user
-   * Returns the authenticated user's information
-   */
-  async getCurrentUser(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: 'Not authenticated',
-        });
-        return;
-      }
+  const token = authHeader.substring(7);
+  const { error } = await supabase.auth.admin.signOut(token);
 
-      res.json({
-        success: true,
-        data: req.user,
-      });
-    } catch (error) {
-      console.error('Get current user error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get user information',
-      });
-    }
+  if (error) {
+    throw createAppError(400, error.message);
   }
 
-  /**
-   * Exchange OAuth code for session
-   * Used after Google OAuth callback
-   */
-  async exchangeCodeForSession(req: Request, res: Response): Promise<void> {
-    try {
-      const { code } = req.body;
+  res.json({
+    success: true,
+    message: 'Signed out successfully',
+  });
+});
 
-      if (!code) {
-        res.status(400).json({
-          success: false,
-          error: 'Authorization code is required',
-        });
-        return;
-      }
-
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-      if (error) {
-        res.status(400).json({
-          success: false,
-          error: error.message,
-        });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: {
-          session: data.session,
-          user: data.user,
-        },
-      });
-    } catch (error) {
-      console.error('Exchange code error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to exchange code for session',
-      });
-    }
+/**
+ * Get current user
+ * Returns the authenticated user's information
+ */
+export const getCurrentUser = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+  if (!req.user) {
+    throw createAppError(401, 'Not authenticated');
   }
-}
+
+  res.json({
+    success: true,
+    data: req.user,
+  });
+});
+
+/**
+ * Exchange OAuth code for session
+ * Used after Google OAuth callback
+ */
+export const exchangeCodeForSession = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const { code } = req.body;
+
+  if (!code) {
+    throw createAppError(400, 'Authorization code is required');
+  }
+
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    throw createAppError(400, error.message);
+  }
+
+  res.json({
+    success: true,
+    data: {
+      session: data.session,
+      user: data.user,
+    },
+  });
+});

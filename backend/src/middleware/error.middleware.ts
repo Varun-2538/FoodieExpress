@@ -1,23 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 
-export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational = true
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, AppError.prototype);
-  }
+export interface AppErrorType extends Error {
+  statusCode: number;
+  isOperational: boolean;
 }
 
+export const createAppError = (
+  statusCode: number,
+  message: string,
+  isOperational: boolean = true
+): AppErrorType => {
+  const error = new Error(message) as AppErrorType;
+  error.statusCode = statusCode;
+  error.isOperational = isOperational;
+  return error;
+};
+
+export const isAppError = (error: any): error is AppErrorType => {
+  return error && typeof error.statusCode === 'number' && typeof error.isOperational === 'boolean';
+};
+
 export const errorHandler = (
-  err: Error | AppError,
+  err: Error | AppErrorType,
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  if (err instanceof AppError) {
+  if (isAppError(err)) {
     res.status(err.statusCode).json({
       success: false,
       error: err.message,
